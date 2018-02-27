@@ -1,37 +1,36 @@
+/* ********************************************************
+ * Name: Kyle Paxton 
+ * Course: CSC 446
+ * Assignment: Assignment 3
+ * Date: 02/21/2018
+ **********************************************************/
 
-import java.awt.DisplayMode;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.Arrays;
-
-import javax.lang.model.element.VariableElement;
-import javax.security.auth.Subject;
-import javax.xml.bind.ValidationEvent;
-import javax.xml.bind.annotation.XmlElementDecl.GLOBAL;
-
-import org.omg.CORBA.portable.ValueBase;
 public class LexicalAnalyzer {
 	
-	public enum Symbol {begint, ift, elset, whilet, intt, floatt, chart, 
-		lsqrbrackett, rsqrbrackett, lbrackett, rbrackett, lparent, rparent,
-		quotationt, commat, semit, periodt, underscoret,
-		numt, idt, eoft, unknownt, relopt, literalt, 
-		addopt, mulopt, assignopt,
-		breakt, continuet, voidt};
+	public enum Symbol {beginToken, ifToken, elseToken, whileToken, intToken, floatToken, charToken, 
+		leftSqrightBracketTokenoken, rightSqrightBracketTokenoken, leftBracketToken, rightBracketToken, leftParenthesisToken, rightParenthesisToken,
+		quotationToken, commaToken, semiColonToken, periodToken, underscoreToken,
+		numberToken, identifierToken, eofToken, unknownToken, relopToken, literalToken, 
+		addoptToken, muloptToken, assignoptToken,
+		breakToken, continueToken, voidToken};
 		
 	static boolean comment = false;
 	static String endOfLine = System.getProperty("line.separator");
+	
+	//retrieves the next token in the string and initiates processing
 	static public void GetNextToken() {
-		Globals.token = Symbol.unknownt;
-		while(Globals.character <= ' ') {
+		Globals.token = Symbol.unknownToken;
+		while(Globals.character <= ' ' && Main.fileContents.length() > 0) {
 			GetNextCharacter();
 		}
-		if(Main.fileContents.isEmpty()) {
-			Globals.token = LexicalAnalyzer.Symbol.eoft;
+		
+		if(Main.fileContents.trim().isEmpty() && Globals.character == ' ') {
+			Globals.token = LexicalAnalyzer.Symbol.eofToken;
 		}
 		else {
 			ProcessToken();
 		}
+		
 	}
 	
 	static public void GetNextCharacter() {
@@ -39,10 +38,21 @@ public class LexicalAnalyzer {
 		{
 			Globals.character = Main.fileContents.charAt(0);
 			Main.fileContents = Main.fileContents.substring(1, Main.fileContents.length());
+			
+			if(Globals.character == endOfLine.charAt(0))
+			{
+				Globals.lineNo++;
+				Globals.character = ' ';
+			}
 		}
+		else {
+			Globals.character = ' ';
+		}
+		
 		
 	}
 	
+	//checks the value of the current character and processes accordingly.
 	static public void ProcessToken() {
 		Globals.lexeme = String.valueOf(Globals.character);
 		GetNextCharacter();
@@ -53,7 +63,7 @@ public class LexicalAnalyzer {
 		}
 		else if(IsNum(Globals.lexeme.charAt(0)))
 		{
-			ProcessNumToken();
+			ProcessnumberTokenoken();
 		}
 		else if(IsDoubleSymbol(Globals.lexeme.charAt(0)))
 		{
@@ -72,6 +82,8 @@ public class LexicalAnalyzer {
 		}
 	}
 	
+	//assigns the token if the item is a reserved word
+	//if, else, while, int, float, char, break, continue, void
 	static public void ProcessWordToken()
 	{
 		FillLexemeWord();
@@ -83,18 +95,20 @@ public class LexicalAnalyzer {
 			}
 			else if(Globals.lexeme.length() > 27)
 			{
-				Globals.token = Symbol.unknownt;
+				Globals.token = Symbol.unknownToken;
 			}
 			else{
-				Globals.token = Symbol.idt;
+				Globals.token = Symbol.identifierToken;
 			}
 		}			
 		
 	}
 	
-	static public void ProcessNumToken()
+	//assigns the token if the item is a number value
+	//1, 2, 3...
+	static public void ProcessnumberTokenoken()
 	{
-		Globals.token = Symbol.numt;
+		Globals.token = Symbol.numberToken;
 
 		FillLexemeNumber();
 		
@@ -107,6 +121,8 @@ public class LexicalAnalyzer {
 		}
 	}
 	
+	//assigns the token if the item is a comment symbol
+	// /*     */
 	static public void ProcessComment()
 	{
 		comment = true; 
@@ -114,6 +130,8 @@ public class LexicalAnalyzer {
 		ClearLexeme();
 	}
 	
+	//assigns the token if the item is a single symbol
+	// {  }  [  ] ...
 	static public void ProcessSingleToken()
 	{
 		for (Symbol sym : Symbol.values()) {
@@ -125,6 +143,8 @@ public class LexicalAnalyzer {
 		}
 	}
 	
+	//assigns the token if the item is two tokens
+	// ==, ||, && ...
 	static public void ProcessDoubleToken()
 	{
 		FillLexemeDoubleSymbol();
@@ -137,13 +157,15 @@ public class LexicalAnalyzer {
 		}
 	}
 	
+	//assigns the token if the item is a literal value
+	// " ...
 	static public void ProcessLiteral() 
 	{
 
-		Globals.token = Symbol.literalt;
+		Globals.token = Symbol.literalToken;
 		FillLexemeLiteral();
 		
-		if(Globals.token == Symbol.literalt)
+		if(Globals.token == Symbol.literalToken)
 		{
 			Globals.literal = Globals.lexeme;
 		}
@@ -188,7 +210,7 @@ public class LexicalAnalyzer {
 			{
 				if(Globals.character == endOfLine.charAt(0))
 				{
-					Globals.token = Symbol.quotationt;
+					Globals.token = Symbol.quotationToken;
 					return;
 				}
 				
@@ -201,7 +223,7 @@ public class LexicalAnalyzer {
 		}
 		else
 		{
-			Globals.token = Symbol.quotationt;
+			Globals.token = Symbol.quotationToken;
 		}
 		
 		
@@ -303,6 +325,7 @@ public class LexicalAnalyzer {
 		return Main.fileContents.charAt(0);
 	}
 	
+	//removes the comment from the fileContents
 	static public void DeleteComment() {
 		boolean continueLoop = true;
 		while(continueLoop) {
@@ -324,4 +347,5 @@ public class LexicalAnalyzer {
 			}
 		}
 	}
+	
 }
