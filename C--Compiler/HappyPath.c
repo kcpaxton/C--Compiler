@@ -1,8 +1,5 @@
-1
-"1"
-1 + 2
-1 - z
-1++4
-x = y
-x = "y"
-_123
+/*a starting comment*/
+int main() {
+        /* two
+	   line comment */
+}

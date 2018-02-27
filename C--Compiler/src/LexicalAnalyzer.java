@@ -344,6 +344,7 @@ public class LexicalAnalyzer {
 				continueLoop = false;
 				Globals.character = ' ';
 				Main.fileContents = Main.fileContents.substring(1, Main.fileContents.length());
+				GetNextToken();
 			}
 		}
 	}
