@@ -25,6 +25,7 @@ import javax.imageio.ImageTypeSpecifier;
 
 
 
+
 public class Main {
 	static String fileContents = "";
 	static Scanner scanner;
@@ -71,26 +72,41 @@ public class Main {
 		characterSymbols.put("*", LexicalAnalyzer.Symbol.muloptToken);
 		characterSymbols.put("=", LexicalAnalyzer.Symbol.assignoptToken);
         
-		try {
-			fileContents = new String(Files.readAllBytes(Paths.get(args[0])), StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+//		try {
+//			fileContents = new String(Files.readAllBytes(Paths.get(args[0])), StandardCharsets.UTF_8);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//
+//		
+//		LexicalAnalyzer.GetNextToken();
+//		
+//		RecursiveDescentParser.Prog();
+//		
+//		if(Globals.token == LexicalAnalyzer.Symbol.eofToken)
+//		{
+//			System.out.println("Successful Compilation!");
+//		}
+//		else {
+//			System.out.println("ERROR - Unused Tokens!");
+//		}
+//        
+		SymbolTable symbolTable = new SymbolTable();
+		symbolTable.insert("hello", LexicalAnalyzer.Symbol.addoptToken, 1);
+		symbolTable.insert("cya", LexicalAnalyzer.Symbol.identifierToken, 1);
+		symbolTable.insert("hey",LexicalAnalyzer.Symbol.addoptToken, 3);
+		symbolTable.insert("hello", LexicalAnalyzer.Symbol.addoptToken, 2);
+		symbolTable.insert("yo", LexicalAnalyzer.Symbol.muloptToken, 2);
+		symbolTable.insert("hey", LexicalAnalyzer.Symbol.intToken, 3);
+		symbolTable.insert("hi", LexicalAnalyzer.Symbol.identifierToken, 2);
 		
-		LexicalAnalyzer.GetNextToken();
-		
-		RecursiveDescentParser.Prog();
-		
-		if(Globals.token == LexicalAnalyzer.Symbol.eofToken)
-		{
-			System.out.println("Successful Compilation!");
-		}
-		else {
-			System.out.println("ERROR - Unused Tokens!");
-		}
-        
+		//SymbolTable.deleteDepth(1);
+		//SymbolTable.deleteDepth(3);
+		//SymbolTable.deleteDepth(2);
+		SymbolTable.writeTable(3);
+		SymbolTable.writeTable(2);
+		SymbolTable.writeTable(1);
     }
 	
 
