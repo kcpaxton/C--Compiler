@@ -12,7 +12,7 @@ public class LexicalAnalyzer {
 		quotationToken, commaToken, semiColonToken, periodToken, underscoreToken,
 		numberToken, identifierToken, eofToken, unknownToken, relopToken, literalToken, 
 		addoptToken, muloptToken, assignoptToken,
-		breakToken, continueToken, voidToken};
+		breakToken, continueToken, voidToken, constToken};
 		
 	static boolean comment = false;
 	static String endOfLine = System.getProperty("line.separator");

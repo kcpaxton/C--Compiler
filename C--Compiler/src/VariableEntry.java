@@ -1,6 +1,10 @@
 
-public class VariableEntry {
+public class VariableEntry extends BaseTableEntry{
 	
+	public VariableEntry(String lexeme, LexicalAnalyzer.Symbol token, int depth) {
+		super(lexeme, token, depth);
+		// TODO Auto-generated constructor stub
+	}
 	public VariableEntry variableType;
 	public int offset;
 	public int size;

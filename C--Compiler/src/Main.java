@@ -45,6 +45,7 @@ public class Main {
 		resWord.put("break", LexicalAnalyzer.Symbol.breakToken);
 		resWord.put("continue", LexicalAnalyzer.Symbol.continueToken);
 		resWord.put("void", LexicalAnalyzer.Symbol.voidToken);
+		resWord.put("const", LexicalAnalyzer.Symbol.constToken);
 		
 		characterSymbols.put("{", LexicalAnalyzer.Symbol.leftBracketToken);
 		characterSymbols.put("}", LexicalAnalyzer.Symbol.rightBracketToken);
@@ -71,6 +72,7 @@ public class Main {
 		characterSymbols.put("%", LexicalAnalyzer.Symbol.muloptToken);
 		characterSymbols.put("*", LexicalAnalyzer.Symbol.muloptToken);
 		characterSymbols.put("=", LexicalAnalyzer.Symbol.assignoptToken);
+		
         
 //		try {
 //			fileContents = new String(Files.readAllBytes(Paths.get(args[0])), StandardCharsets.UTF_8);

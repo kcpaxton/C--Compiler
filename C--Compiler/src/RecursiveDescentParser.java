@@ -38,7 +38,9 @@ public class RecursiveDescentParser {
 		
 	}
 	
-	//PROG -> TYPE idt REST PROG | ~
+	//PROG -> TYPE idt REST PROG | 
+	//		  const  idt  =  num ; PROG | 
+	//		  ~
 	public static void Prog() {
 		if(Globals.token == LexicalAnalyzer.Symbol.intToken ||
 			Globals.token == LexicalAnalyzer.Symbol.floatToken ||
@@ -47,6 +49,14 @@ public class RecursiveDescentParser {
 				Match(LexicalAnalyzer.Symbol.identifierToken);
 				Rest();
 				Prog();
+		}
+		else if(Globals.token == LexicalAnalyzer.Symbol.constToken) {
+			Match(LexicalAnalyzer.Symbol.constToken);
+			Match(LexicalAnalyzer.Symbol.identifierToken);
+			Match(LexicalAnalyzer.Symbol.assignoptToken);
+			Match(LexicalAnalyzer.Symbol.numberToken);
+			Match(LexicalAnalyzer.Symbol.semiColonToken);
+			Prog();
 		}
 		else {
 			//do nothing
@@ -130,13 +140,23 @@ public class RecursiveDescentParser {
 		
 	}
 	
-	//DECL -> TYPE IDLIST | ~
+	//DECL -> TYPE IDLIST
+	// 		  const  idt  =  num  ;  DECL |
+	// 		  ~
 	public static void Decl() {
 		if(Globals.token == LexicalAnalyzer.Symbol.intToken ||
 		Globals.token == LexicalAnalyzer.Symbol.floatToken ||
 		Globals.token == LexicalAnalyzer.Symbol.charToken) {
 			Type();
 			IdList();
+		}
+		else if(Globals.token == LexicalAnalyzer.Symbol.constToken) {
+			Match(LexicalAnalyzer.Symbol.constToken);
+			Match(LexicalAnalyzer.Symbol.identifierToken);
+			Match(LexicalAnalyzer.Symbol.assignoptToken);
+			Match(LexicalAnalyzer.Symbol.numberToken);
+			Match(LexicalAnalyzer.Symbol.semiColonToken);
+			Decl();
 		}
 		else {
 			//do nothing
