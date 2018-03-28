@@ -5,14 +5,14 @@ public class VariableEntry extends BaseTableEntry{
 		super(lexeme, token, depth);
 		// TODO Auto-generated constructor stub
 	}
-	public VariableEntry variableType;
+	public LexicalAnalyzer.Symbol variableType;
 	public int offset;
 	public int size;
 	
-	public VariableEntry getVariableType() {
+	public LexicalAnalyzer.Symbol getVariableType() {
 		return variableType;
 	}
-	public void setVariableType(VariableEntry variableType) {
+	public void setVariableType(LexicalAnalyzer.Symbol variableType) {
 		this.variableType = variableType;
 	}
 	public int getOffset() {
