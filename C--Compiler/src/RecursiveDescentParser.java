@@ -1,5 +1,10 @@
 import java.awt.List;
+import java.beans.Expression;
+import java.beans.Statement;
 import java.util.LinkedList;
+
+import javax.management.timer.TimerMBean;
+import javax.xml.parsers.FactoryConfigurationError;
 
 /* ********************************************************
  * Name: Kyle Paxton 
@@ -32,7 +37,7 @@ public class RecursiveDescentParser {
 	public static String funcNameHold = "";
 	public static LexicalAnalyzer.Symbol funcReturnHold;
 	static LexicalAnalyzer.Symbol currentReturnType;
-	public static LinkedList<ParameterEntry> parameterList = new LinkedList();
+	public static LinkedList<ParameterEntry> parameterList = new LinkedList<ParameterEntry>();
 
 	static SymbolTable symbolTable = new SymbolTable();
 
@@ -220,11 +225,112 @@ public class RecursiveDescentParser {
 		}
 	}
 
-	// STAT_LIST -> ~
+	// STAT_LIST -> Statement ; STAT_LIST | ~
 	public static void StatList() {
-		// do nothing
+		if(Globals.token == LexicalAnalyzer.Symbol.identifierToken  ) {
+			Statement();
+			Match(LexicalAnalyzer.Symbol.semiColonToken);
+			StatList();
+		}
+		else {
+			//do nothing
+		}
 	}
 
+	public static void Statement() {
+		if(Globals.token == LexicalAnalyzer.Symbol.identifierToken  ) {
+			AssignStat();
+		}
+		else {
+			IOStat();
+		}
+	}
+	private static void IOStat() {
+		//do nothing
+	}
+
+	private static void AssignStat() {
+		Match(LexicalAnalyzer.Symbol.identifierToken);
+		Match(LexicalAnalyzer.Symbol.assignoptToken);
+		Expr();
+
+	}
+
+	private static void Expr() {
+		Relation();
+	}
+
+	private static void Relation() {
+		SimpleExpr();
+	}
+
+	private static void SimpleExpr() {
+		SignOp();
+		Term();
+		MoreTerm();
+	}
+
+	private static void MoreTerm() {
+		if (Globals.token == LexicalAnalyzer.Symbol.addoptToken ) {
+			AddOp();
+			Term();
+			MoreTerm();
+		}
+		else {
+			//do nothing
+		}
+	}
+
+	private static void Term() {
+		Factor();
+		MoreFactor();
+	}
+
+	private static void MoreFactor() {
+		if (Globals.token == LexicalAnalyzer.Symbol.muloptToken ) {
+			MulOp();
+			Factor();
+			MoreFactor();
+		}
+		else {
+			//do nothing
+		}
+	}
+
+	private static void Factor() {
+		if (Globals.token == LexicalAnalyzer.Symbol.identifierToken ) {
+			Match(LexicalAnalyzer.Symbol.identifierToken);
+		}
+		else if (Globals.token == LexicalAnalyzer.Symbol.numberToken ) {
+			Match(LexicalAnalyzer.Symbol.numberToken);
+		}
+		else {
+			Match(LexicalAnalyzer.Symbol.leftParenthesisToken);
+			Expr();
+			Match(LexicalAnalyzer.Symbol.rightParenthesisToken);
+		}
+	}
+
+	private static void AddOp() {
+		Match(LexicalAnalyzer.Symbol.addoptToken);
+	}
+	
+	private static void SignOp() {
+		if (Globals.token == LexicalAnalyzer.Symbol.signoptToken ) {
+			Match(LexicalAnalyzer.Symbol.signoptToken);
+		}
+		else if (Globals.lexeme.equals("-") ) {
+			Match(LexicalAnalyzer.Symbol.addoptToken);
+		}
+		else {
+			//do nothing
+		}
+	}
+	
+	private static void MulOp() {
+		Match(LexicalAnalyzer.Symbol.muloptToken);
+	}
+	
 	// RET_STAT -> ~
 	public static void RetStat() {
 		// do nothing

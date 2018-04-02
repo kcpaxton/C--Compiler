@@ -1,5 +1,8 @@
-int a1, b1;
-const w = 3;
+
+int main(){
+	a1 = 10 + 5; 
+}
+/*const w = 3;
 const x = 3.14;
 int main()
 {

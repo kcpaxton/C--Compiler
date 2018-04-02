@@ -71,6 +71,7 @@ public class Main {
 		characterSymbols.put("/", LexicalAnalyzer.Symbol.muloptToken);
 		characterSymbols.put("%", LexicalAnalyzer.Symbol.muloptToken);
 		characterSymbols.put("*", LexicalAnalyzer.Symbol.muloptToken);
+		characterSymbols.put("!", LexicalAnalyzer.Symbol.signoptToken);
 		characterSymbols.put("=", LexicalAnalyzer.Symbol.assignoptToken);
 		
         

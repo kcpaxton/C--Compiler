@@ -11,6 +11,7 @@ public class SymbolTable {
 	static int tableSize = 211;
 	static LinkedList<BaseTableEntry>[] myHashTable;
 	
+	@SuppressWarnings("unchecked")
 	public SymbolTable() {
 		myHashTable=new LinkedList[tableSize];		
 	}

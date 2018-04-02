@@ -1,3 +1,5 @@
+import javax.xml.crypto.dsig.spec.SignatureMethodParameterSpec;
+
 /* ********************************************************
  * Name: Kyle Paxton 
  * Course: CSC 446
@@ -11,7 +13,7 @@ public class LexicalAnalyzer {
 		leftSqrightBracketTokenoken, rightSqrightBracketTokenoken, leftBracketToken, rightBracketToken, leftParenthesisToken, rightParenthesisToken,
 		quotationToken, commaToken, semiColonToken, periodToken, underscoreToken,
 		numberToken, identifierToken, eofToken, unknownToken, relopToken, literalToken, 
-		addoptToken, muloptToken, assignoptToken,
+		addoptToken, muloptToken, assignoptToken, signoptToken,
 		breakToken, continueToken, voidToken, constToken};
 		
 	static boolean comment = false;
