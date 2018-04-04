@@ -239,7 +239,13 @@ public class RecursiveDescentParser {
 
 	public static void Statement() {
 		if(Globals.token == LexicalAnalyzer.Symbol.identifierToken  ) {
-			AssignStat();
+			if(symbolTable.lookUp(Globals.lexeme) != null) {
+				AssignStat();				
+			}
+			else {
+				System.out.println("Undeclared variable: " + Globals.lexeme + " at line number: " + Globals.lineNo);
+				System.exit(0);
+			}
 		}
 		else {
 			IOStat();
