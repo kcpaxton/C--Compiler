@@ -14,7 +14,7 @@ public class LexicalAnalyzer {
 		quotationToken, commaToken, semiColonToken, periodToken, underscoreToken,
 		numberToken, identifierToken, eofToken, unknownToken, relopToken, literalToken, 
 		addoptToken, muloptToken, assignoptToken, signoptToken,
-		breakToken, continueToken, voidToken, constToken};
+		breakToken, continueToken, voidToken, constToken, returnToken};
 		
 	static boolean comment = false;
 	static String endOfLine = System.getProperty("line.separator");
@@ -326,7 +326,7 @@ public class LexicalAnalyzer {
 	static public char CheckNextChar() {
 		return Main.fileContents.charAt(0);
 	}
-	
+
 	//removes the comment from the fileContents
 	static public void DeleteComment() {
 		boolean continueLoop = true;

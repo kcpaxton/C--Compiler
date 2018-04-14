@@ -25,7 +25,7 @@ public class SymbolTable {
 			myHashTable[hashedLocation].addFirst(newEntry);
 		}
 		else if(tempNode.getDepth() == newEntry.depth){
-			System.out.println("Error: Cannot insert lexeme at specified depth");
+			System.out.println("Error: Cannot insert lexeme: " + newEntry.lexeme+ " at depth: "+ newEntry.depth);
 		}
 		else {		
 			int hashedLocation = hash(newEntry.lexeme);			
@@ -94,18 +94,26 @@ public class SymbolTable {
 			 if(i != null) {
 				 for(BaseTableEntry j : i) {
 					 if(j.getDepth() == depth) {
-						 
+						 String instanceClass = "";
 						 if(j instanceof VariableEntry){
-							 System.out.printf("%-15.15s  %-15.15s  %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s%n" , j.getClass(), j.getDepth(), j.getLexeme(), j.getToken(),
+							 instanceClass = "Variable";
+							 System.out.printf("%-15.15s  %-15.15s  %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s%n" ,instanceClass, j.getDepth(), j.getLexeme(), j.getToken(),
 						     ((VariableEntry) j).getOffset(), ((VariableEntry) j).getSize(), " - ", " - ");
 						 }
 						 else if(j instanceof ConstantEntry){
-							 System.out.printf("%-15.15s  %-15.15s  %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s%n" ,j.getClass(), j.getDepth(), j.getLexeme(), j.getToken(),
+							 instanceClass = "Const";
+							 System.out.printf("%-15.15s  %-15.15s  %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s%n" ,instanceClass, j.getDepth(), j.getLexeme(), j.getToken(),
 									 " - ", " - ", ((ConstantEntry) j).getValue(), ((ConstantEntry) j).getValueReal());
 						 }
 						 else if(j instanceof FunctionEntry){
-							 System.out.printf("%-15.15s  %-15.15s  %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s%n" ,j.getClass(), j.getDepth(), j.getLexeme(), j.getToken(),
+							 instanceClass = "Function";
+							 System.out.printf("%-15.15s  %-15.15s  %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s%n" , instanceClass, j.getDepth(), j.getLexeme(), j.getToken(),
 									 " - ", " - ", " - ", " - ", ((FunctionEntry) j).getParameterCount(), ((FunctionEntry) j).getLocalSize());
+						 }
+						 else if(j instanceof ParameterEntry){
+							 instanceClass = "Parameter";
+							 System.out.printf("%-15.15s  %-15.15s  %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s %-15.15s%n" , instanceClass, j.getDepth(), j.getLexeme(), j.getToken(),
+									 "-", " - ", " - ", " - ", "-", "-");
 						 }
 						 else {
 							 System.out.printf("%-30.30s  %-30.30s  %-30.30s%n" , j.getDepth(), j.getLexeme(), j.getToken());

@@ -46,6 +46,7 @@ public class Main {
 		resWord.put("continue", LexicalAnalyzer.Symbol.continueToken);
 		resWord.put("void", LexicalAnalyzer.Symbol.voidToken);
 		resWord.put("const", LexicalAnalyzer.Symbol.constToken);
+		resWord.put("return", LexicalAnalyzer.Symbol.returnToken);
 		
 		characterSymbols.put("{", LexicalAnalyzer.Symbol.leftBracketToken);
 		characterSymbols.put("}", LexicalAnalyzer.Symbol.rightBracketToken);
@@ -86,7 +87,7 @@ public class Main {
 		LexicalAnalyzer.GetNextToken();
 		
 		RecursiveDescentParser.Prog();
-		RecursiveDescentParser.symbolTable.writeTable(1);
+		RecursiveDescentParser.symbolTable.myWriteTable(1);
 		if(Globals.token != LexicalAnalyzer.Symbol.eofToken)
 		{
 			System.out.println("ERROR - Unused Tokens!");

@@ -1,6 +1,7 @@
 import java.awt.List;
 import java.beans.Expression;
 import java.beans.Statement;
+import java.security.Policy.Parameters;
 import java.util.LinkedList;
 
 import javax.management.timer.TimerMBean;
@@ -9,8 +10,8 @@ import javax.xml.parsers.FactoryConfigurationError;
 /* ********************************************************
  * Name: Kyle Paxton 
  * Course: CSC 446
- * Assignment: Assignment 5
- * Date: 03/28/2018
+ * Assignment: Assignment 6
+ * Date: 04/04/2018
  **********************************************************/
 
 /*Recursive Descent Parser designed with the grammar below*
@@ -172,7 +173,7 @@ public class RecursiveDescentParser {
 		RetStat();
 		Match(LexicalAnalyzer.Symbol.rightBracketToken);		
 		symbolTable.insert(setFunction(funcNameHold, funcReturnHold, depth-1, parameterList.size(), localSize));
-		symbolTable.writeTable(depth);
+		symbolTable.myWriteTable(depth);
 		localSize = 0;
 		depth--;
 		parameterList.clear();
@@ -236,7 +237,7 @@ public class RecursiveDescentParser {
 			//do nothing
 		}
 	}
-
+	// Statement - > AssignStat | IOStat
 	public static void Statement() {
 		if(Globals.token == LexicalAnalyzer.Symbol.identifierToken  ) {
 			if(symbolTable.lookUp(Globals.lexeme) != null) {
@@ -255,27 +256,38 @@ public class RecursiveDescentParser {
 		//do nothing
 	}
 
+	//AssignStat -> idt = Expr
 	private static void AssignStat() {
 		Match(LexicalAnalyzer.Symbol.identifierToken);
 		Match(LexicalAnalyzer.Symbol.assignoptToken);
-		Expr();
+		if(LexicalAnalyzer.CheckNextChar() != '(') {
+			Expr();
+		}
+		else {
+			FuncCall();
+		}
+		
 
 	}
 
+	//Expr -> Relation
 	private static void Expr() {
 		Relation();
 	}
 
+	// Relation -> SimpleExpr
 	private static void Relation() {
 		SimpleExpr();
 	}
 
+	//SimpleExpr -> SignOp Term MoreTerm
 	private static void SimpleExpr() {
 		SignOp();
 		Term();
 		MoreTerm();
 	}
 
+	//MoreTerm -> Addop Term MoreTerm | ~
 	private static void MoreTerm() {
 		if (Globals.token == LexicalAnalyzer.Symbol.addoptToken ) {
 			AddOp();
@@ -286,12 +298,12 @@ public class RecursiveDescentParser {
 			//do nothing
 		}
 	}
-
+	//Term -> Factor MoreFactor
 	private static void Term() {
 		Factor();
 		MoreFactor();
 	}
-
+	//MoreFactor -> Mulop Factor MoreFactor | ~
 	private static void MoreFactor() {
 		if (Globals.token == LexicalAnalyzer.Symbol.muloptToken ) {
 			MulOp();
@@ -303,6 +315,7 @@ public class RecursiveDescentParser {
 		}
 	}
 
+	//Factor -> id | num | ( Expr )
 	private static void Factor() {
 		if (Globals.token == LexicalAnalyzer.Symbol.identifierToken ) {
 			Match(LexicalAnalyzer.Symbol.identifierToken);
@@ -316,11 +329,13 @@ public class RecursiveDescentParser {
 			Match(LexicalAnalyzer.Symbol.rightParenthesisToken);
 		}
 	}
-
+	
+	// Addop -> + | - | '||' 
 	private static void AddOp() {
 		Match(LexicalAnalyzer.Symbol.addoptToken);
 	}
 	
+	//SignOp -> ! | - | ~
 	private static void SignOp() {
 		if (Globals.token == LexicalAnalyzer.Symbol.signoptToken ) {
 			Match(LexicalAnalyzer.Symbol.signoptToken);
@@ -333,14 +348,53 @@ public class RecursiveDescentParser {
 		}
 	}
 	
+	// MulOp -> * | / | &&
 	private static void MulOp() {
 		Match(LexicalAnalyzer.Symbol.muloptToken);
 	}
 	
 	// RET_STAT -> ~
 	public static void RetStat() {
-		// do nothing
+		Match(LexicalAnalyzer.Symbol.returnToken);
+		Expr();
+		Match(LexicalAnalyzer.Symbol.semiColonToken);
 	}
+
+	private static void FuncCall() {
+		Match(LexicalAnalyzer.Symbol.identifierToken);
+		Match(LexicalAnalyzer.Symbol.leftParenthesisToken);
+		Params();
+		Match(LexicalAnalyzer.Symbol.rightParenthesisToken);
+	}
+	
+	private static void Params() {			
+		if (Globals.token == LexicalAnalyzer.Symbol.identifierToken) {
+			Match(LexicalAnalyzer.Symbol.identifierToken);
+			ParamsTail();
+		}
+		else if (Globals.token == LexicalAnalyzer.Symbol.numberToken){
+			Match(LexicalAnalyzer.Symbol.numberToken);
+			ParamsTail();
+		}
+		else {
+			//do nothing
+		}
+	}
+	private static void ParamsTail() {
+		Match(LexicalAnalyzer.Symbol.commaToken);
+		if (Globals.token == LexicalAnalyzer.Symbol.identifierToken) {
+			Match(LexicalAnalyzer.Symbol.identifierToken);
+			ParamsTail();
+		}
+		else if (Globals.token == LexicalAnalyzer.Symbol.numberToken){
+			Match(LexicalAnalyzer.Symbol.numberToken);
+			ParamsTail();
+		}
+		else {
+			//do nothing
+		}
+	}
+
 
 	public static void printError(LexicalAnalyzer.Symbol desired) {
 		System.out.println("Expected " + desired + " at line number: " + Globals.lineNo);
@@ -391,9 +445,9 @@ public class RecursiveDescentParser {
 		myFunctionEntry.setLocalSize(localSize);
 		myFunctionEntry.setParameterCount(parameterListCount);
 		
-		while(!parameterList.isEmpty()) {
-			symbolTable.insert(parameterList.removeFirst());
-		}	
+		//while(!parameterList.isEmpty()) {
+		//	symbolTable.insert(parameterList.removeFirst());
+		//}	
 		
 		return myFunctionEntry;
 	}
