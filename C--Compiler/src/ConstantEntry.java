@@ -6,17 +6,17 @@ public class ConstantEntry extends BaseTableEntry{
 		// TODO Auto-generated constructor stub
 	}
 	//Union{
-	public int value;
-	public float valueReal;
+	public Integer value;
+	public Float valueReal;
 	//}
 
-	public int getValue() {
+	public Integer getValue() {
 		return value;
 	}
 	public void setValue(int value) {
 		this.value = value;
 	}
-	public float getValueReal() {
+	public Float getValueReal() {
 		return valueReal;
 	}
 	public void setValueReal(float valueReal) {

@@ -1,8 +1,8 @@
 /* ********************************************************
  * Name: Kyle Paxton 
  * Course: CSC 446
- * Assignment: Assignment 3
- * Date: 02/21/2018
+ * Assignment: Assignment 7
+ * Date: 04/18/2018
  **********************************************************/
 
 import java.io.BufferedReader;
@@ -11,6 +11,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,13 +25,16 @@ import java.nio.file.Paths;
 
 import javax.imageio.ImageTypeSpecifier;
 
+import org.omg.CORBA.PUBLIC_MEMBER;
+
 
 
 
 public class Main {
 	static String fileContents = "";
 	static Scanner scanner;
-	
+	static PrintWriter writer = null;
+	static String fileName = null;
 	final static HashMap<String, LexicalAnalyzer.Symbol> resWord = new HashMap<String, LexicalAnalyzer.Symbol>();
 	final static HashMap<String, LexicalAnalyzer.Symbol> characterSymbols = new HashMap<String, LexicalAnalyzer.Symbol>();
 	public static void main(String[] args) {
@@ -83,20 +88,42 @@ public class Main {
 			e.printStackTrace();
 		}
 
+		try {
+			fileName =args[0].substring(0, args[0].indexOf("."));
+			writer = new PrintWriter(fileName+".tac",  "UTF-8");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
 		
 		LexicalAnalyzer.GetNextToken();
 		
 		RecursiveDescentParser.Prog();
-		RecursiveDescentParser.symbolTable.myWriteTable(1);
 		if(Globals.token != LexicalAnalyzer.Symbol.eofToken)
 		{
 			System.out.println("ERROR - Unused Tokens!");
-			//System.out.println("Successful Compilation!");
+			System.exit(0);
+			
 		}
-
-		
-
+		checkMain();
+		writer.close();
+		System.out.println("");
+		System.out.println("Successfully wrote to: " + fileName + ".tac");
     }
 	
+	private static void checkMain() {
+		if(RecursiveDescentParser.symbolTable.lookUp("main") == null) {
+			System.out.println("ERROR - Program must contain function main!");
+			System.exit(0);
+		}
+		else {
+			RecursiveDescentParser.outputTacLine("Start Proc Main");
+		}
+	}
 
 }

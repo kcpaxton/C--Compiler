@@ -130,7 +130,7 @@ public class SymbolTable {
 	
 	
 	public static int hash(String lexeme) {
-		return (lexeme.hashCode() % tableSize);
+		return Math.abs((lexeme.hashCode() % tableSize));
 	}
 }
 

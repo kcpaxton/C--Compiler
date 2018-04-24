@@ -3,10 +3,9 @@ import javax.xml.crypto.dsig.spec.SignatureMethodParameterSpec;
 /* ********************************************************
  * Name: Kyle Paxton 
  * Course: CSC 446
- * Assignment: Assignment 3
- * Date: 02/21/2018
+ * Assignment: Assignment 7
+ * Date: 04/18/2018
  **********************************************************/
-
 public class LexicalAnalyzer {
 	
 	public enum Symbol {beginToken, ifToken, elseToken, whileToken, intToken, floatToken, charToken, 
@@ -18,6 +17,8 @@ public class LexicalAnalyzer {
 		
 	static boolean comment = false;
 	static String endOfLine = System.getProperty("line.separator");
+	
+	
 	
 	//retrieves the next token in the string and initiates processing
 	static public void GetNextToken() {

@@ -1,17 +1,12 @@
-import java.awt.List;
-import java.beans.Expression;
-import java.beans.Statement;
-import java.security.Policy.Parameters;
+import java.util.ArrayList;
 import java.util.LinkedList;
-
-import javax.management.timer.TimerMBean;
-import javax.xml.parsers.FactoryConfigurationError;
+import java.util.Stack;
 
 /* ********************************************************
  * Name: Kyle Paxton 
  * Course: CSC 446
- * Assignment: Assignment 6
- * Date: 04/04/2018
+ * Assignment: Assignment 7
+ * Date: 04/18/2018
  **********************************************************/
 
 /*Recursive Descent Parser designed with the grammar below*
@@ -25,21 +20,42 @@ import javax.xml.parsers.FactoryConfigurationError;
  * DECL      -> TYPE IDLIST | ~
  * IDLIST    -> idt IDTAIL ; DECL
  * IDTAIL    -> , idt IDTAIL | ~
- * STAT_LIST -> ~
- * RET_STAT  -> ~
- * 
+ *  STAT_LIST -> Statement ; STAT_LIST | ~
+ * RET_STAT -> returnToken Expr ;
+ * AssignStat -> idt = Expr | idt = FuncCall
+ * Expr -> Relation
+ * Relation -> SimpleExpr
+ * SimpleExpr -> SignOp Term MoreTerm
+ * MoreTerm -> Addop Term MoreTerm | ~
+ * Factor -> id | num | ( Expr )
+ * Addop -> + | - | '||' 
+ * SignOp -> ! | - | ~
+ * MulOp -> * | / | &&
+ * FuncCall -> idt ( Params )
+ * Params -> idt ParamsTail | num ParamsTail | ~
+ * ParamsTail -> , idt ParamsTail | , num ParamsTail | ~
  **********************************************************/
 
 public class RecursiveDescentParser {
 
 	public static int depth = 1;
-	public static int offset = 0;
+
+	public static int paramOffset = 4;
+	public static int variableOffset = -2;
 	public static int localSize = 0;
 	public static String funcNameHold = "";
+	public static String returnVariable = "";
+	public static String sign = "";
+	
+	public static ArrayList<String> items = new ArrayList<>();
+	
+	public static ArrayList<String> declaredVariables= new ArrayList<>();
+	public static ArrayList<String> variables= new ArrayList<>();
+	public static ArrayList<String> operations = new ArrayList<>();
 	public static LexicalAnalyzer.Symbol funcReturnHold;
 	static LexicalAnalyzer.Symbol currentReturnType;
 	public static LinkedList<ParameterEntry> parameterList = new LinkedList<ParameterEntry>();
-
+	public static Stack<String> paramStack = new Stack<>();
 	static SymbolTable symbolTable = new SymbolTable();
 
 	// compares the current token with the expected.
@@ -118,7 +134,6 @@ public class RecursiveDescentParser {
 	public static void Rest() {
 		switch (Globals.token) {
 		case leftParenthesisToken:
-			offset = 0;
 			depth++;
 			Match(LexicalAnalyzer.Symbol.leftParenthesisToken);
 			ParamList();
@@ -131,6 +146,7 @@ public class RecursiveDescentParser {
 			Prog();
 			break;
 		}
+		
 	}
 
 	// PARAMLIST -> TYPE idt PARAMTAIL | ~
@@ -138,9 +154,9 @@ public class RecursiveDescentParser {
 		if (Globals.token == LexicalAnalyzer.Symbol.intToken || Globals.token == LexicalAnalyzer.Symbol.floatToken
 				|| Globals.token == LexicalAnalyzer.Symbol.charToken) {
 			Type();
-			symbolTable.insert(setVariable(Globals.lexeme, currentReturnType, depth));
+			symbolTable.insert(setParameterVariable(Globals.lexeme, currentReturnType, depth));
 			parameterList.add(setParameter(Globals.lexeme, currentReturnType, depth));
-			updateLocalSize(currentReturnType);
+			//updateLocalSize(currentReturnType);
 
 			Match(LexicalAnalyzer.Symbol.identifierToken);
 			ParamTail();
@@ -153,10 +169,11 @@ public class RecursiveDescentParser {
 	public static void ParamTail() {
 		if (Globals.token == LexicalAnalyzer.Symbol.commaToken) {
 			Match(LexicalAnalyzer.Symbol.commaToken);
+			
 			Type();
-			symbolTable.insert(setVariable(Globals.lexeme, currentReturnType, depth)); 
+			symbolTable.insert(setParameterVariable(Globals.lexeme, currentReturnType, depth)); 
 			parameterList.add(setParameter(Globals.lexeme, currentReturnType, depth));
-			updateLocalSize(currentReturnType);
+			//updateLocalSize(currentReturnType);
 			Match(LexicalAnalyzer.Symbol.identifierToken);
 			ParamTail();
 		} else {
@@ -166,16 +183,20 @@ public class RecursiveDescentParser {
 
 	// COMPOUND -> { DECL STAT_LIST RET_STAT }
 	public static void Compound() {
+		Main.writer.printf("%-15.15s  %-15.15s%n", "Proc", funcNameHold);
+		System.out.printf("%-15.15s  %-15.15s%n", "Proc", funcNameHold);
+		variableOffset = -2;
 		Match(LexicalAnalyzer.Symbol.leftBracketToken);
-		offset = 0;
 		Decl();
 		StatList();
 		RetStat();
-		Match(LexicalAnalyzer.Symbol.rightBracketToken);		
-		symbolTable.insert(setFunction(funcNameHold, funcReturnHold, depth-1, parameterList.size(), localSize));
-		symbolTable.myWriteTable(depth);
-		localSize = 0;
+		Match(LexicalAnalyzer.Symbol.rightBracketToken);
+		Main.writer.printf("%-15.15s  %-15.15s%n", "Endp", funcNameHold);
+		System.out.printf("%-15.15s  %-15.15s%n", "Endp", funcNameHold);
+		System.out.println("");
 		depth--;
+		symbolTable.insert(setFunction(funcNameHold, funcReturnHold, depth, parameterList.size(), localSize));
+		localSize = 0;
 		parameterList.clear();
 	}
 
@@ -207,7 +228,9 @@ public class RecursiveDescentParser {
 	// IDLIST -> idt IDTAIL ; DECL
 	public static void IdList() {
 		symbolTable.insert(setVariable(Globals.lexeme, currentReturnType, depth));
-		updateLocalSize(currentReturnType);
+		if(depth > 1) {			
+			updateLocalSize(currentReturnType);
+		}
 		Match(LexicalAnalyzer.Symbol.identifierToken);
 		IdTail();
 		Match(LexicalAnalyzer.Symbol.semiColonToken);
@@ -219,6 +242,9 @@ public class RecursiveDescentParser {
 		if (Globals.token == LexicalAnalyzer.Symbol.commaToken) {
 			Match(LexicalAnalyzer.Symbol.commaToken);
 			symbolTable.insert(setVariable(Globals.lexeme, currentReturnType, depth));
+			if(depth > 1) {			
+				updateLocalSize(currentReturnType);
+			}
 			Match(LexicalAnalyzer.Symbol.identifierToken);
 			IdTail();
 		} else {
@@ -256,12 +282,18 @@ public class RecursiveDescentParser {
 		//do nothing
 	}
 
-	//AssignStat -> idt = Expr
+	//AssignStat -> idt = Expr | idt = FuncCall
 	private static void AssignStat() {
+		returnVariable = Globals.lexeme;
+		
+		BaseTableEntry exprTableEntry = new BaseTableEntry(null, null, depth);
+		
 		Match(LexicalAnalyzer.Symbol.identifierToken);
 		Match(LexicalAnalyzer.Symbol.assignoptToken);
-		if(LexicalAnalyzer.CheckNextChar() != '(') {
-			Expr();
+		if(Globals.character != '(') {
+			//setAssignTacLine();
+			exprTableEntry = Expr(exprTableEntry);
+			outputTacLine(tacName(returnVariable) + " = " + tacName(exprTableEntry.lexeme));
 		}
 		else {
 			FuncCall();
@@ -271,63 +303,107 @@ public class RecursiveDescentParser {
 	}
 
 	//Expr -> Relation
-	private static void Expr() {
-		Relation();
+	private static BaseTableEntry Expr(BaseTableEntry exprTableEntry) {
+		exprTableEntry = Relation(exprTableEntry);
+		
+		return exprTableEntry;
 	}
 
 	// Relation -> SimpleExpr
-	private static void Relation() {
-		SimpleExpr();
+	private static BaseTableEntry Relation(BaseTableEntry exprTableEntry) {
+		exprTableEntry = SimpleExpr(exprTableEntry);
+		return exprTableEntry;
 	}
 
 	//SimpleExpr -> SignOp Term MoreTerm
-	private static void SimpleExpr() {
+	private static BaseTableEntry SimpleExpr(BaseTableEntry exprTableEntry) {
+		
+		BaseTableEntry termTableEntry = new BaseTableEntry(null, null, depth);
+		
 		SignOp();
-		Term();
-		MoreTerm();
+		termTableEntry = Term(termTableEntry);
+		termTableEntry = MoreTerm(termTableEntry);
+		exprTableEntry = termTableEntry;
+		return exprTableEntry;
 	}
 
 	//MoreTerm -> Addop Term MoreTerm | ~
-	private static void MoreTerm() {
+	private static BaseTableEntry MoreTerm(BaseTableEntry moreTermTableEntry) {
+		BaseTableEntry myMoreTermTableEntry = new BaseTableEntry(null, null, depth);
 		if (Globals.token == LexicalAnalyzer.Symbol.addoptToken ) {
-			AddOp();
-			Term();
-			MoreTerm();
+			String operation = Globals.lexeme;
+			String tempVariable = generateTempVariable();
+			AddOp();	
+			
+			myMoreTermTableEntry = Term(myMoreTermTableEntry);
+			outputTacLine(tempVariable + " = " + tacName(moreTermTableEntry.lexeme) +  " " + operation + " " + tacName(myMoreTermTableEntry.lexeme));
+			
+			moreTermTableEntry.lexeme = tempVariable;
+			myMoreTermTableEntry = MoreTerm(myMoreTermTableEntry);
+			
 		}
 		else {
 			//do nothing
 		}
+		
+		return moreTermTableEntry;
 	}
 	//Term -> Factor MoreFactor
-	private static void Term() {
-		Factor();
-		MoreFactor();
+	private static BaseTableEntry Term(BaseTableEntry termTableEntry) {
+		
+		BaseTableEntry factorTableEntry = new BaseTableEntry(null, null, depth);
+		
+		factorTableEntry = Factor(factorTableEntry);
+		factorTableEntry = MoreFactor(factorTableEntry);
+		termTableEntry = factorTableEntry;
+		return termTableEntry;
 	}
 	//MoreFactor -> Mulop Factor MoreFactor | ~
-	private static void MoreFactor() {
+	private static BaseTableEntry MoreFactor(BaseTableEntry morefactorTableEntry) {
 		if (Globals.token == LexicalAnalyzer.Symbol.muloptToken ) {
+			String operation = Globals.lexeme;
+			String tempVariable = generateTempVariable();
 			MulOp();
-			Factor();
-			MoreFactor();
+			
+			BaseTableEntry myMoreFactorTableEntry = new BaseTableEntry(null, null, depth);
+			
+			myMoreFactorTableEntry = Factor(myMoreFactorTableEntry);
+			outputTacLine(tempVariable + " = " + tacName(morefactorTableEntry.lexeme) +  " " + operation + " " + tacName(myMoreFactorTableEntry.lexeme));
+			
+			morefactorTableEntry.lexeme = tempVariable;
+			myMoreFactorTableEntry = MoreFactor(myMoreFactorTableEntry);
+			
 		}
 		else {
 			//do nothing
 		}
+		return morefactorTableEntry;
 	}
 
 	//Factor -> id | num | ( Expr )
-	private static void Factor() {
+	private static BaseTableEntry Factor(BaseTableEntry factorTableEntry) {
 		if (Globals.token == LexicalAnalyzer.Symbol.identifierToken ) {
+			BaseTableEntry checkTableEntry = symbolTable.lookUp(Globals.lexeme);
+			
+			if(checkTableEntry instanceof ConstantEntry) {
+				factorTableEntry.lexeme = tacName(checkTableEntry.lexeme);
+			}
+			else {
+				factorTableEntry.lexeme = checkTableEntry.lexeme;
+			}
+			
 			Match(LexicalAnalyzer.Symbol.identifierToken);
 		}
 		else if (Globals.token == LexicalAnalyzer.Symbol.numberToken ) {
+			factorTableEntry.lexeme = tacName(Globals.lexeme);
 			Match(LexicalAnalyzer.Symbol.numberToken);
 		}
 		else {
 			Match(LexicalAnalyzer.Symbol.leftParenthesisToken);
-			Expr();
+			Expr(factorTableEntry);
 			Match(LexicalAnalyzer.Symbol.rightParenthesisToken);
 		}
+		return factorTableEntry;
 	}
 	
 	// Addop -> + | - | '||' 
@@ -341,6 +417,7 @@ public class RecursiveDescentParser {
 			Match(LexicalAnalyzer.Symbol.signoptToken);
 		}
 		else if (Globals.lexeme.equals("-") ) {
+			sign += Globals.lexeme;
 			Match(LexicalAnalyzer.Symbol.addoptToken);
 		}
 		else {
@@ -353,42 +430,66 @@ public class RecursiveDescentParser {
 		Match(LexicalAnalyzer.Symbol.muloptToken);
 	}
 	
-	// RET_STAT -> ~
+	// RET_STAT -> returnToken Expr ;
 	public static void RetStat() {
 		Match(LexicalAnalyzer.Symbol.returnToken);
-		Expr();
+
+		BaseTableEntry exprTableEntry = new BaseTableEntry(null, null, depth);
+		exprTableEntry = Expr(exprTableEntry);
+		outputTacLine("_AX = " + tacName(exprTableEntry.lexeme));
 		Match(LexicalAnalyzer.Symbol.semiColonToken);
+		
+
 	}
 
+	// FuncCall -> idt ( Params )
 	private static void FuncCall() {
+		String funcName = Globals.lexeme;
+		
 		Match(LexicalAnalyzer.Symbol.identifierToken);
 		Match(LexicalAnalyzer.Symbol.leftParenthesisToken);
 		Params();
 		Match(LexicalAnalyzer.Symbol.rightParenthesisToken);
+		outputTacLine(tacName(funcName));
 	}
 	
+	//Params -> idt ParamsTail | num ParamsTail | ~
 	private static void Params() {			
 		if (Globals.token == LexicalAnalyzer.Symbol.identifierToken) {
+			paramStack.push(Globals.lexeme);
 			Match(LexicalAnalyzer.Symbol.identifierToken);
-			ParamsTail();
+			if(Globals.token == LexicalAnalyzer.Symbol.commaToken) {
+				ParamsTail();				
+			}
 		}
 		else if (Globals.token == LexicalAnalyzer.Symbol.numberToken){
+			paramStack.push(Globals.lexeme);
 			Match(LexicalAnalyzer.Symbol.numberToken);
-			ParamsTail();
+			if(Globals.token == LexicalAnalyzer.Symbol.commaToken) {
+				ParamsTail();				
+			}
 		}
 		else {
 			//do nothing
 		}
 	}
+	
+	//ParamsTail -> , idt ParamsTail | , num ParamsTail | ~
 	private static void ParamsTail() {
 		Match(LexicalAnalyzer.Symbol.commaToken);
 		if (Globals.token == LexicalAnalyzer.Symbol.identifierToken) {
+			paramStack.push(Globals.lexeme);
 			Match(LexicalAnalyzer.Symbol.identifierToken);
-			ParamsTail();
+			if(Globals.token == LexicalAnalyzer.Symbol.commaToken) {
+				ParamsTail();				
+			}
 		}
 		else if (Globals.token == LexicalAnalyzer.Symbol.numberToken){
+			paramStack.push(Globals.lexeme);
 			Match(LexicalAnalyzer.Symbol.numberToken);
-			ParamsTail();
+			if(Globals.token == LexicalAnalyzer.Symbol.commaToken) {
+				ParamsTail();				
+			}
 		}
 		else {
 			//do nothing
@@ -401,24 +502,49 @@ public class RecursiveDescentParser {
 		System.out.println("Token used: " + Globals.token);
 		System.exit(0);
 	}
+	
 
 	private static VariableEntry setVariable(String lexeme, LexicalAnalyzer.Symbol returnType, int depth) {
 		VariableEntry myVariableEntry = new VariableEntry(lexeme, returnType, depth);
 
 		myVariableEntry.setVariableType(returnType);
-		myVariableEntry.setOffset(offset);
+		myVariableEntry.setOffset(variableOffset);
 		switch (myVariableEntry.getVariableType()) {
 		case intToken:
 			myVariableEntry.setSize(2);
-			offset += 2;
+			variableOffset -= 2;
 			break;
 		case floatToken:
 			myVariableEntry.setSize(4);
-			offset += 4;
+			variableOffset -= 4;
 			break;
 		case charToken:
 			myVariableEntry.setSize(1);
-			offset += 1;
+			variableOffset -= 1;
+			break;
+		default:
+			break;
+		}
+		
+		return myVariableEntry;
+	}
+	private static VariableEntry setParameterVariable(String lexeme, LexicalAnalyzer.Symbol returnType, int depth) {
+		VariableEntry myVariableEntry = new VariableEntry(lexeme, returnType, depth);
+
+		myVariableEntry.setVariableType(returnType);
+		myVariableEntry.setOffset(paramOffset);
+		switch (myVariableEntry.getVariableType()) {
+		case intToken:
+			myVariableEntry.setSize(2);
+			paramOffset += 2;
+			break;
+		case floatToken:
+			myVariableEntry.setSize(4);
+			paramOffset += 4;
+			break;
+		case charToken:
+			myVariableEntry.setSize(1);
+			paramOffset += 1;
 			break;
 		default:
 			break;
@@ -451,11 +577,13 @@ public class RecursiveDescentParser {
 		
 		return myFunctionEntry;
 	}
+	
 	private static ParameterEntry setParameter(String lexeme, LexicalAnalyzer.Symbol returnType, int depth) {
 		ParameterEntry myParameterEntry = new ParameterEntry(lexeme, returnType, depth);
 		
 		return myParameterEntry;
 	}
+	
 	private static void updateLocalSize(LexicalAnalyzer.Symbol returnType) {
 		switch (returnType) {
 		case intToken:
@@ -471,4 +599,68 @@ public class RecursiveDescentParser {
 			break;
 		}
 	}
+	
+	//sets the TAC code on the AssignStat function
+	
+	public static void outputTacLine(String line) {
+		System.out.println(line);
+		Main.writer.println(line);
+	}
+	
+	private static String tacName(String lexeme) {
+		
+		if(isInt(lexeme)) {
+			
+			String tempVariable = generateTempVariable();
+			outputTacLine(tempVariable + " = " + sign + lexeme);
+			sign = "";
+			return tempVariable;
+		}
+
+		BaseTableEntry checkTableEntry = symbolTable.lookUp(lexeme);
+		if(checkTableEntry instanceof VariableEntry) {
+			if(checkTableEntry.depth == 1) {
+				return lexeme;
+			}
+			else {
+				return "_bp" + ((VariableEntry)checkTableEntry).getOffset();
+			}
+		}
+		else if(checkTableEntry instanceof FunctionEntry) {
+			while(paramStack.size() != 0) {
+				outputTacLine("Push " + tacName(paramStack.pop()));
+			}
+			outputTacLine("call " + lexeme);
+			
+			String tempVariable = generateTempVariable();
+			
+			return tacName(returnVariable) + " = _AX"; 
+		}
+		else if(checkTableEntry instanceof ConstantEntry) {
+				return ((ConstantEntry)checkTableEntry).getValue().toString();
+		}
+		else {
+			return lexeme;
+			
+		}
+	}
+	
+	private static String generateTempVariable() {
+		int oldOffset = variableOffset;
+		variableOffset -= 2;
+		return "_bp" + oldOffset;
+	}
+	
+
+	
+	static boolean isInt(String s)
+	{
+	 try
+	  { int i = Integer.parseInt(s); return true; }
+
+	 catch(NumberFormatException er)
+	  { return false; }
+	}
+		
+
 }
