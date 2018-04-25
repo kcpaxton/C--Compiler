@@ -1,14 +1,11 @@
-import java.util.Hashtable;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.ArrayList;
-import java.util.List;
 import java.lang.Math;
-import javax.security.auth.x500.X500Principal;
+
 
 public class SymbolTable {
 	
 	static int tableSize = 211;
+	static int localSize = 0;
 	static LinkedList<BaseTableEntry>[] myHashTable;
 	
 	@SuppressWarnings("unchecked")
@@ -128,6 +125,61 @@ public class SymbolTable {
 		 System.out.println();
 	}
 	
+	public LinkedList<StringEntry> getStringLiterals(){
+		LinkedList<StringEntry> list = new LinkedList<StringEntry>();
+		
+		for(LinkedList<BaseTableEntry> i : myHashTable) {
+			 if(i != null) {
+				 for(BaseTableEntry j : i) {
+					 if(j instanceof StringEntry){
+						 list.add((StringEntry) j);
+					 }
+				 }
+			 }
+		}
+		
+		return list;
+	}
+	
+	
+	public LinkedList<VariableEntry> getIntegers(){
+		LinkedList<VariableEntry> list = new LinkedList<VariableEntry>();
+		
+		for(LinkedList<BaseTableEntry> i : myHashTable) {
+			 if(i != null) {
+				 for(BaseTableEntry j : i) {
+					 if(j.getDepth() == 1) {
+						 if(j instanceof VariableEntry){
+							 if(((VariableEntry) j).getVariableType() == LexicalAnalyzer.Symbol.intToken) {
+								 list.add((VariableEntry) j);							 
+							 }
+						 }
+					 }
+				 }
+			 }
+		}
+		
+		return list;
+	}
+	
+
+	public LinkedList<VariableEntry> getCharacters(){
+		LinkedList<VariableEntry> list = new LinkedList<VariableEntry>();
+		
+		for(LinkedList<BaseTableEntry> i : myHashTable) {
+			 if(i != null) {
+				 for(BaseTableEntry j : i) {
+					 if(j instanceof VariableEntry){
+						 if(((VariableEntry) j).getVariableType() == LexicalAnalyzer.Symbol.charToken) {
+							 list.add((VariableEntry) j);							 
+						 }
+					 }
+				 }
+			 }
+		}
+		
+		return list;
+	}
 	
 	public static int hash(String lexeme) {
 		return Math.abs((lexeme.hashCode() % tableSize));

@@ -37,6 +37,7 @@ public class Main {
 	static String fileName = null;
 	final static HashMap<String, LexicalAnalyzer.Symbol> resWord = new HashMap<String, LexicalAnalyzer.Symbol>();
 	final static HashMap<String, LexicalAnalyzer.Symbol> characterSymbols = new HashMap<String, LexicalAnalyzer.Symbol>();
+	
 	public static void main(String[] args) {
 		
 		Globals.token = LexicalAnalyzer.Symbol.unknownToken;
@@ -52,6 +53,9 @@ public class Main {
 		resWord.put("void", LexicalAnalyzer.Symbol.voidToken);
 		resWord.put("const", LexicalAnalyzer.Symbol.constToken);
 		resWord.put("return", LexicalAnalyzer.Symbol.returnToken);
+		resWord.put("cout", LexicalAnalyzer.Symbol.coutToken);
+		resWord.put("cin", LexicalAnalyzer.Symbol.cinToken);
+		resWord.put("endl", LexicalAnalyzer.Symbol.endLineToken);
 		
 		characterSymbols.put("{", LexicalAnalyzer.Symbol.leftBracketToken);
 		characterSymbols.put("}", LexicalAnalyzer.Symbol.rightBracketToken);
@@ -79,6 +83,8 @@ public class Main {
 		characterSymbols.put("*", LexicalAnalyzer.Symbol.muloptToken);
 		characterSymbols.put("!", LexicalAnalyzer.Symbol.signoptToken);
 		characterSymbols.put("=", LexicalAnalyzer.Symbol.assignoptToken);
+		characterSymbols.put("<<", LexicalAnalyzer.Symbol.leftShiftToken);
+		characterSymbols.put(">>", LexicalAnalyzer.Symbol.rightShiftToken);
 		
         
 		try {
@@ -102,8 +108,9 @@ public class Main {
 		
 		
 		LexicalAnalyzer.GetNextToken();
-		
 		RecursiveDescentParser.Prog();
+		
+		
 		if(Globals.token != LexicalAnalyzer.Symbol.eofToken)
 		{
 			System.out.println("ERROR - Unused Tokens!");
@@ -114,15 +121,17 @@ public class Main {
 		writer.close();
 		System.out.println("");
 		System.out.println("Successfully wrote to: " + fileName + ".tac");
+		System.out.println("");
+		
+		CodeGenerator codeGenerator = new CodeGenerator(fileName+".tac", RecursiveDescentParser.symbolTable);
+		codeGenerator.processTacFile();
+		
     }
 	
 	private static void checkMain() {
 		if(RecursiveDescentParser.symbolTable.lookUp("main") == null) {
 			System.out.println("ERROR - Program must contain function main!");
 			System.exit(0);
-		}
-		else {
-			RecursiveDescentParser.outputTacLine("Start Proc Main");
 		}
 	}
 

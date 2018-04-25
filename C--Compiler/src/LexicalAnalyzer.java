@@ -12,8 +12,8 @@ public class LexicalAnalyzer {
 		leftSqrightBracketTokenoken, rightSqrightBracketTokenoken, leftBracketToken, rightBracketToken, leftParenthesisToken, rightParenthesisToken,
 		quotationToken, commaToken, semiColonToken, periodToken, underscoreToken,
 		numberToken, identifierToken, eofToken, unknownToken, relopToken, literalToken, 
-		addoptToken, muloptToken, assignoptToken, signoptToken,
-		breakToken, continueToken, voidToken, constToken, returnToken};
+		addoptToken, muloptToken, assignoptToken, signoptToken, leftShiftToken, rightShiftToken,
+		breakToken, continueToken, voidToken, constToken, returnToken, cinToken, coutToken, endLineToken};
 		
 	static boolean comment = false;
 	static String endOfLine = System.getProperty("line.separator");
@@ -261,7 +261,8 @@ public class LexicalAnalyzer {
 		testString += data;
 		testString += Globals.character;
 		if(testString.equals("==") || testString.equals("<=") || testString.equals("||") ||
-			testString.equals("!=") || testString.equals(">=") || testString.equals("&&"))
+			testString.equals("!=") || testString.equals(">=") || testString.equals("&&") ||
+			testString.equals("<<") || testString.equals(">>"))
 		{
 			return true;
 		}

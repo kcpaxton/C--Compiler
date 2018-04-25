@@ -20,7 +20,7 @@ import java.util.Stack;
  * DECL      -> TYPE IDLIST | ~
  * IDLIST    -> idt IDTAIL ; DECL
  * IDTAIL    -> , idt IDTAIL | ~
- *  STAT_LIST -> Statement ; STAT_LIST | ~
+ * STAT_LIST -> Statement ; STAT_LIST | ~
  * RET_STAT -> returnToken Expr ;
  * AssignStat -> idt = Expr | idt = FuncCall
  * Expr -> Relation
@@ -46,6 +46,8 @@ public class RecursiveDescentParser {
 	public static String funcNameHold = "";
 	public static String returnVariable = "";
 	public static String sign = "";
+	public static String outputString = "";
+	public static int stringName = 0;
 	
 	public static ArrayList<String> items = new ArrayList<>();
 	
@@ -156,7 +158,7 @@ public class RecursiveDescentParser {
 			Type();
 			symbolTable.insert(setParameterVariable(Globals.lexeme, currentReturnType, depth));
 			parameterList.add(setParameter(Globals.lexeme, currentReturnType, depth));
-			//updateLocalSize(currentReturnType);
+			updateLocalSize(currentReturnType);
 
 			Match(LexicalAnalyzer.Symbol.identifierToken);
 			ParamTail();
@@ -173,7 +175,7 @@ public class RecursiveDescentParser {
 			Type();
 			symbolTable.insert(setParameterVariable(Globals.lexeme, currentReturnType, depth)); 
 			parameterList.add(setParameter(Globals.lexeme, currentReturnType, depth));
-			//updateLocalSize(currentReturnType);
+			updateLocalSize(currentReturnType);
 			Match(LexicalAnalyzer.Symbol.identifierToken);
 			ParamTail();
 		} else {
@@ -183,17 +185,15 @@ public class RecursiveDescentParser {
 
 	// COMPOUND -> { DECL STAT_LIST RET_STAT }
 	public static void Compound() {
-		Main.writer.printf("%-15.15s  %-15.15s%n", "Proc", funcNameHold);
-		System.out.printf("%-15.15s  %-15.15s%n", "Proc", funcNameHold);
+		outputTacLine("Proc "+ funcNameHold);
 		variableOffset = -2;
 		Match(LexicalAnalyzer.Symbol.leftBracketToken);
 		Decl();
 		StatList();
 		RetStat();
 		Match(LexicalAnalyzer.Symbol.rightBracketToken);
-		Main.writer.printf("%-15.15s  %-15.15s%n", "Endp", funcNameHold);
-		System.out.printf("%-15.15s  %-15.15s%n", "Endp", funcNameHold);
-		System.out.println("");
+		outputTacLine("Endp "+ funcNameHold);
+		
 		depth--;
 		symbolTable.insert(setFunction(funcNameHold, funcReturnHold, depth, parameterList.size(), localSize));
 		localSize = 0;
@@ -254,7 +254,9 @@ public class RecursiveDescentParser {
 
 	// STAT_LIST -> Statement ; STAT_LIST | ~
 	public static void StatList() {
-		if(Globals.token == LexicalAnalyzer.Symbol.identifierToken  ) {
+		if(Globals.token == LexicalAnalyzer.Symbol.identifierToken ||
+			Globals.token == LexicalAnalyzer.Symbol.coutToken ||
+			Globals.token == LexicalAnalyzer.Symbol.cinToken){			
 			Statement();
 			Match(LexicalAnalyzer.Symbol.semiColonToken);
 			StatList();
@@ -278,10 +280,74 @@ public class RecursiveDescentParser {
 			IOStat();
 		}
 	}
+	
 	private static void IOStat() {
-		//do nothing
+		if(Globals.token == LexicalAnalyzer.Symbol.cinToken ) {
+			InStat();			
+		}
+		else {
+			OutStat();			
+		}
+	}
+	
+	private static void InStat() {
+		Match(LexicalAnalyzer.Symbol.cinToken);
+		Match(LexicalAnalyzer.Symbol.rightShiftToken);
+		outputTacLine(tacName("rdi " + tacName(Globals.lexeme)));
+		Match(LexicalAnalyzer.Symbol.identifierToken);
+		InEnd();
+		
+		
 	}
 
+	private static void InEnd() {
+		if(Globals.token == LexicalAnalyzer.Symbol.rightShiftToken) {
+			Match(LexicalAnalyzer.Symbol.rightShiftToken);
+			Match(LexicalAnalyzer.Symbol.identifierToken);
+			InEnd();
+		}
+		else {
+			//do nothing
+		}
+	}
+	
+	private static void OutStat() {
+		Match(LexicalAnalyzer.Symbol.coutToken);
+		Match(LexicalAnalyzer.Symbol.leftShiftToken);		
+		OutOptions();
+		OutEnd();
+		
+	}
+	
+	private static void OutOptions() {
+		if(Globals.token == LexicalAnalyzer.Symbol.identifierToken) {
+			outputTacLine(tacName("wri " + tacName(Globals.lexeme)));
+			Match(LexicalAnalyzer.Symbol.identifierToken);
+		}
+		else if(Globals.token == LexicalAnalyzer.Symbol.literalToken) {
+			outputTacLine(tacName("wrs " + tacName(Globals.lexeme)));
+			symbolTable.insert(setStringEntry(Globals.lexeme, LexicalAnalyzer.Symbol.literalToken, depth));
+			updateLocalSize(LexicalAnalyzer.Symbol.literalToken);
+			Match(LexicalAnalyzer.Symbol.literalToken);
+		}
+		else {
+			outputTacLine("wrln");
+			Match(LexicalAnalyzer.Symbol.endLineToken);
+		}
+	}
+	
+	private static void OutEnd() {
+		if(Globals.token == LexicalAnalyzer.Symbol.leftShiftToken) {
+			Match(LexicalAnalyzer.Symbol.leftShiftToken);
+			OutOptions();
+			OutEnd();
+		}
+		else {
+			//do nothing
+		}
+	}
+
+	
 	//AssignStat -> idt = Expr | idt = FuncCall
 	private static void AssignStat() {
 		returnVariable = Globals.lexeme;
@@ -436,7 +502,7 @@ public class RecursiveDescentParser {
 
 		BaseTableEntry exprTableEntry = new BaseTableEntry(null, null, depth);
 		exprTableEntry = Expr(exprTableEntry);
-		outputTacLine("_AX = " + tacName(exprTableEntry.lexeme));
+		outputTacLine("ax = " + tacName(exprTableEntry.lexeme));
 		Match(LexicalAnalyzer.Symbol.semiColonToken);
 		
 
@@ -528,6 +594,15 @@ public class RecursiveDescentParser {
 		
 		return myVariableEntry;
 	}
+	
+	private static StringEntry setStringEntry(String lexeme, LexicalAnalyzer.Symbol returnType, int depth) {
+		StringEntry myStringEntry = new StringEntry(lexeme, returnType, depth);
+		myStringEntry.setValue(Globals.literal);
+		myStringEntry.setName("_S" + stringName);
+		stringName++;
+		return myStringEntry;
+	}
+	
 	private static VariableEntry setParameterVariable(String lexeme, LexicalAnalyzer.Symbol returnType, int depth) {
 		VariableEntry myVariableEntry = new VariableEntry(lexeme, returnType, depth);
 
@@ -608,40 +683,48 @@ public class RecursiveDescentParser {
 	}
 	
 	private static String tacName(String lexeme) {
-		
-		if(isInt(lexeme)) {
+		if(lexeme != null) {
+			if(isInt(lexeme)) {
+				
+				String tempVariable = generateTempVariable();
+				outputTacLine(tempVariable + " = " + sign + lexeme);
+				sign = "";
+				return tempVariable;
+			}
 			
-			String tempVariable = generateTempVariable();
-			outputTacLine(tempVariable + " = " + sign + lexeme);
-			sign = "";
-			return tempVariable;
-		}
-
-		BaseTableEntry checkTableEntry = symbolTable.lookUp(lexeme);
-		if(checkTableEntry instanceof VariableEntry) {
-			if(checkTableEntry.depth == 1) {
-				return lexeme;
+			if(lexeme.startsWith("\"")){
+				return "_S" + stringName;
+				
+			}
+			
+			BaseTableEntry checkTableEntry = symbolTable.lookUp(lexeme);
+			if(checkTableEntry instanceof VariableEntry) {
+				if(checkTableEntry.depth == 1) {
+					return lexeme;
+				}
+				else {
+					return "_bp" + ((VariableEntry)checkTableEntry).getOffset();
+				}
+			}
+			else if(checkTableEntry instanceof FunctionEntry) {
+				while(paramStack.size() != 0) {
+					outputTacLine("Push " + tacName(paramStack.pop()));
+				}
+				outputTacLine("call " + lexeme);
+				
+				return tacName(returnVariable) + " = ax"; 
+			}
+			else if(checkTableEntry instanceof ConstantEntry) {
+				return ((ConstantEntry)checkTableEntry).getValue().toString();
 			}
 			else {
-				return "_bp" + ((VariableEntry)checkTableEntry).getOffset();
+				return lexeme;
+				
 			}
-		}
-		else if(checkTableEntry instanceof FunctionEntry) {
-			while(paramStack.size() != 0) {
-				outputTacLine("Push " + tacName(paramStack.pop()));
-			}
-			outputTacLine("call " + lexeme);
 			
-			String tempVariable = generateTempVariable();
-			
-			return tacName(returnVariable) + " = _AX"; 
-		}
-		else if(checkTableEntry instanceof ConstantEntry) {
-				return ((ConstantEntry)checkTableEntry).getValue().toString();
 		}
 		else {
 			return lexeme;
-			
 		}
 	}
 	
