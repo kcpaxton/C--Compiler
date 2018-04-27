@@ -30,14 +30,22 @@ public class SymbolTable {
 		}
 		
 	}
-	 
+	
 	public BaseTableEntry lookUp(String lexeme) {
 		int hashedLocation = hash(lexeme);
 		if(myHashTable[hashedLocation] == null) {
 			return null;
 		}
 		else {
-			return myHashTable[hashedLocation].getFirst();
+			//return myHashTable[hashedLocation].getFirst();
+			for (BaseTableEntry baseTableEntry: myHashTable[hashedLocation]) {
+				if(baseTableEntry.getLexeme().equals(lexeme)) {
+					return baseTableEntry;
+				}
+				
+			}
+			
+			return null;
 		}
 	}
 	
